@@ -104,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemBuilder: (context, index) {
                       return SongTile(
                         song: _songs[index],
-                        isPlaying: _musicService.currentSong == index,
+                        isPlaying: _musicService.currentSongIndex == index,
                         onTap: () => _onSongTap(index),
                       );
                     },

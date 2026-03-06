@@ -19,7 +19,7 @@ class MusicService {
   int get currentSongIndex => _currentSongIndex;
   Song? get currentSong => _songs.isNotEmpty ? _songs[_currentSongIndex] : null;
 
-  Future<List<Song>> _scanForSongs() async {
+  Future<List<Song>> scanForSongs() async {
     _songs.clear();
     try {
       final allDirectories = await _getAllStorageDirectories();
@@ -194,7 +194,7 @@ class MusicService {
     }
   }
 
-  Future<void> pauseSongs() async {
+  Future<void> pauseSong() async {
     if (_audioPlayer.playing) {
       await _audioPlayer.pause();
     } else {

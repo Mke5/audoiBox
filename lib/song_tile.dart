@@ -76,6 +76,17 @@ class SongTile extends StatelessWidget {
               ), // Text
           ],
         ), // subtitle
+        trailing: isPlaying
+            ? Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ), // BoxDecoration
+                child: Icon(Icons.pause, color: Colors.deepPurple, size: 20),
+              ) // Container
+            : Icon(Icons.play_arrow, color: Colors.grey[600]),
+        onTap: onTap,
       ), // ListTile
     ); // Container
   }

@@ -1,3 +1,4 @@
+import 'package:audiobox/mini_player.dart';
 import 'package:audiobox/music_screen.dart';
 import 'package:audiobox/music_service.dart';
 import 'package:audiobox/song_model.dart';
@@ -110,15 +111,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ), // ListView.builder
           ), // Expanded
-          // if(_musicService.currentSong != null){
-          //   MiniPlayer(
-          //     onTap: _openMusicScreen,
-          //     onPlayPause: () async {
-          //       await _musicService.pauseSong;
-
-          //     }
-          //   ), // MiniPlayer
-          // }
+          if (_musicService.currentSong != null)
+            MiniPlayer(
+              onTap: () => _openMusicScreen(context),
+              onPlayPause: () async {
+                // await _musicService.pauseSong();
+                setState(() {});
+              },
+            ), // MiniPlayer
         ],
       ), // Column
     ); // Scaffold

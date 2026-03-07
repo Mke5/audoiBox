@@ -19,9 +19,12 @@ class MusicService {
 
   List<Song> get songs => _songs;
 
-  // AudioPlayer get audioPlayer => _audioPlayer;
+  AudioPlayer get audioPlayer => _audioPlayer;
   // int get currentSongIndex => _currentSongIndex;
-  // Song? get currentSong => _songs.isNotEmpty ? _songs[_currentSongIndex] : null;
+  Song? get currentSong =>
+      (currentSongIndex >= 0 && currentSongIndex < _songs.length)
+      ? _songs[currentSongIndex]
+      : null;
 
   Future<List<Song>> scanForSongs() async {
     // _songs.clear();

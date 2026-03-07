@@ -1,4 +1,5 @@
 // import 'dart:io';
+import 'package:audio_session/audio_session.dart';
 import 'package:audiobox/song_model.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:on_audio_query_pluse/on_audio_query.dart';
@@ -25,6 +26,24 @@ class MusicService {
       (currentSongIndex >= 0 && currentSongIndex < _songs.length)
       ? _songs[currentSongIndex]
       : null;
+
+  Future<void> initAudioSession() async {
+    final session = await AudioSession.instance;
+    await session.configure(const AudioSessionConfiguration.music());
+
+    // This listener handles "Becoming Noisy" (e.g., unplugging headphones)
+    session.becomingNoisyEventStream.listen((_) {
+      _audioPlayer.pause();
+    });
+
+    // This ensures that if another app (like YouTube) starts playing,
+    // your app pauses automatically.
+    session.interruptionEventStream.listen((event) {
+      if (event.begin) {
+        _audioPlayer.pause();
+      }
+    });
+  }
 
   Future<List<Song>> scanForSongs() async {
     // _songs.clear();
@@ -55,6 +74,7 @@ class MusicService {
 
     _songs = deviceSongs.map((s) {
       return Song(
+        id: s.id,
         title: s.title,
         artist: s.artist ?? "Unknown Artist",
         album: s.album ?? "Unknown Album",

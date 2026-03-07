@@ -1,6 +1,7 @@
 import 'package:audiobox/music_service.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:on_audio_query_pluse/on_audio_query.dart';
 
 class MiniPlayer extends StatefulWidget {
   final VoidCallback onTap;
@@ -41,20 +42,37 @@ class _MiniPlayerState extends State<MiniPlayer> {
         ), // BoxDecoration
         child: Row(
           children: [
+            // Container(
+            //   width: 50,
+            //   height: 50,
+            //   margin: EdgeInsets.all(10),
+            //   decoration: BoxDecoration(
+            //     gradient: LinearGradient(
+            //       colors: [Colors.purple, Colors.deepPurple],
+            //       begin: Alignment.topLeft,
+            //       end: Alignment.bottomRight,
+            //     ), // LinearGradient
+            //     borderRadius: BorderRadius.circular(8),
+            //   ),
+            //   child: Icon(Icons.music_note, color: Colors.white, size: 30),
+            // ), // Container
+            // Inside MiniPlayer row:
             Container(
               width: 50,
               height: 50,
-              margin: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.purple, Colors.deepPurple],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ), // LinearGradient
+              margin: const EdgeInsets.all(10),
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
+                child: QueryArtworkWidget(
+                  id: currentSong.id,
+                  type: ArtworkType.AUDIO,
+                  nullArtworkWidget: Container(
+                    color: Colors.deepPurple,
+                    child: const Icon(Icons.music_note, color: Colors.white),
+                  ),
+                ),
               ),
-              child: Icon(Icons.music_note, color: Colors.white, size: 30),
-            ), // Container
+            ),
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -87,8 +105,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
               stream: _musicService.audioPlayer.playerStateStream,
               builder: (context, snapshot) {
                 final playerState = snapshot.data;
-                final playing =
-                    playerState?.playing ?? _musicService.audioPlayer.playing;
+                final playing = playerState?.playing ?? false;
                 final processingState = playerState?.processingState;
 
                 if (processingState == ProcessingState.loading ||

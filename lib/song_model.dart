@@ -1,4 +1,5 @@
 class Song {
+  final int id;
   final String title;
   final String artist;
   final String album;
@@ -6,6 +7,7 @@ class Song {
   final Duration duration;
 
   Song({
+    required this.id,
     required this.title,
     required this.artist,
     required this.album,

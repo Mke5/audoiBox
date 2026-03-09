@@ -4,6 +4,7 @@ import 'package:audiobox/music_service.dart';
 import 'package:audiobox/song_model.dart';
 import 'package:audiobox/song_tile.dart';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,6 +16,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final MusicService _musicService = MusicService();
   List<Song> _songs = [];
   bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
@@ -46,10 +48,20 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF000000),
       appBar: AppBar(
-        title: Text('Audiobox'),
+        elevation: 0,
+        centerTitle: false,
+        backgroundColor: const Color(0xFF000000),
+        title: Text('Audiobox',
+          style: TextStyle(
+            color: Color(0xFFFFFFFF),
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ), // Text
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadSongs),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadSongs, color: Color(0xFFFFFFFF)),
           IconButton(
             icon: const Icon(Icons.play_arrow),
             onPressed: () => _openMusicScreen(context),
@@ -64,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        CircularProgressIndicator(color: Colors.purple),
+                        CircularProgressIndicator(color: Color(0xFFFC3C44)),
                         SizedBox(height: 20),
                         Text(
                           'Loading songs',
@@ -74,42 +86,31 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ) // Center
                 : _songs.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.music_off,
-                          size: 80,
-                          color: Colors.grey[600],
-                        ),
-                        Text(
-                          'No songs found',
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        ),
-                        SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _loadSongs,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.purple,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: Text('Scan Again'),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: EdgeInsets.all(16),
-                    itemCount: _songs.length,
-                    itemBuilder: (context, index) {
-                      return SongTile(
-                        song: _songs[index],
-                        isPlaying: _musicService.currentSongIndex == index,
-                        onTap: () => _onSongTap(index),
-                      );
-                    },
-                  ), // ListView.builder
+                ? _buildEmptyState()
+                : StreamBuilder<PlayerState>(
+                  stream: _musicService.audioPlayer.playerStateStream,
+                  builder: (context, snapshot) {
+                    // 1. Get the current playing status (true/false)
+                    final playing = snapshot.data?.playing ?? false;
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      itemCount: _songs.length,
+                      itemBuilder: (context, index) {
+                        // 2. Check if this specific tile is the one loaded in the player
+                        final bool isCurrentTrack = _musicService.currentSongIndex == index;
+
+                        return SongTile(
+                          song: _songs[index],
+                          isPlaying: isCurrentTrack,
+                          // 3. Only shows the "Bars" if it's the active track AND it's not paused
+                          isActuallyPlaying: isCurrentTrack && playing,
+                          onTap: () => _onSongTap(index),
+                        );
+                      },
+                    );
+                  },
+                )
           ), // Expanded
           if (_musicService.currentSong != null)
             MiniPlayer(
@@ -122,5 +123,31 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ), // Column
     ); // Scaffold
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.music_off, size: 80, color: Color(0xFF9CA3AF)), // textMuted
+          const SizedBox(height: 16),
+          const Text(
+            'No songs found',
+            style: TextStyle(color: Color(0xFFFFFFFF), fontSize: 20),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _loadSongs,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFC3C44), // colors.primary
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Scan Again'),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -40,6 +40,7 @@ dependencies:
   audio_metadata_reader: ^1.4.2
   on_audio_query_pluse: ^3.0.6
   audio_session: ^0.2.2
+  marquee: ^2.3.0
 
 dev_dependencies:
   flutter_test:

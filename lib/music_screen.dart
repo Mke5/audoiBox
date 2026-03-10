@@ -77,7 +77,7 @@ class _MusicScreenState extends State<MusicScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.more_horiz, color: Colors.white),
+                        icon: const Icon(Icons.more_vert, color: Colors.white),
                         onPressed: () {},
                       ),
                     ],

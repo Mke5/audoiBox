@@ -8,19 +8,29 @@ import 'package:just_audio/just_audio.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
   final MusicService _musicService = MusicService();
+  final TextEditingController _searchController = TextEditingController();
+
   List<Song> _songs = [];
   bool _isLoading = true;
+  String _searchQuery = "";
 
   @override
   void initState() {
     super.initState();
     _loadSongs();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadSongs() async {
@@ -29,9 +39,15 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _isLoading = false);
   }
 
-  void _onSongTap(int index) async {
-    print("Song clicked: ${index}");
-    await _musicService.playSongs(index);
+  List<Song> get _filteredSongs {
+    if (_searchQuery.isEmpty) return _songs;
+    return _songs
+        .where(
+          (s) =>
+              s.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              s.artist.toLowerCase().contains(_searchQuery.toLowerCase()),
+        )
+        .toList();
   }
 
   void _openMusicScreen(BuildContext context) {
@@ -44,100 +60,157 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF000000),
-      appBar: AppBar(
-        elevation: 0,
-        centerTitle: false,
-        backgroundColor: const Color(0xFF000000),
-        title: Text(
-          'Audiobox',
-          style: TextStyle(
-            color: Color(0xFFFFFFFF),
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ), // Text
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadSongs,
-            color: Color(0xFFFFFFFF),
-          ),
-          IconButton(
-            icon: const Icon(Icons.play_arrow),
-            onPressed: () => _openMusicScreen(context),
-          ), // Icon Buton
-        ], // actions
-      ), // AppBar
-      body: Column(
-        children: [
-          Expanded(
-            child: _isLoading
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(color: Color(0xFFFC3C44)),
-                        SizedBox(height: 20),
-                        Text(
-                          'Loading songs',
-                          style: TextStyle(color: Colors.white),
-                        ), // Text
-                      ],
+      backgroundColor: Colors.black,
+      // Prevents the keyboard from pushing the MiniPlayer up
+      resizeToAvoidBottomInset: false,
+
+      // Keeps MiniPlayer pinned at the bottom regardless of keyboard
+      bottomNavigationBar: StreamBuilder<int?>(
+        stream: _musicService.audioPlayer.currentIndexStream,
+        builder: (context, snapshot) {
+          if (snapshot.data == null) return const SizedBox.shrink();
+          return MiniPlayer(
+            onTap: () => _openMusicScreen(context),
+            onPlayPause: () => _musicService.pauseSong(),
+          );
+        },
+      ),
+
+      body: CustomScrollView(
+        slivers: [
+          // --- LARGE TITLE APP BAR ---
+          SliverAppBar(
+            expandedHeight: 110.0,
+            floating: false,
+            pinned: true,
+            backgroundColor: Colors.black,
+            elevation: 0,
+            flexibleSpace: FlexibleSpaceBar(
+              titlePadding: const EdgeInsetsDirectional.only(
+                start: 16,
+                bottom: 16,
+              ),
+              centerTitle: false,
+              title: const Text(
+                'Audiobox',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh, color: Colors.white),
+                onPressed: _loadSongs,
+              ),
+              StreamBuilder<bool>(
+                stream: _musicService.audioPlayer.shuffleModeEnabledStream,
+                builder: (context, snapshot) {
+                  final isShuffle = snapshot.data ?? false;
+                  return IconButton(
+                    icon: Icon(
+                      Icons.shuffle,
+                      color: isShuffle ? const Color(0xFFFC3C44) : Colors.white,
                     ),
-                  ) // Center
-                : _songs.isEmpty
-                ? _buildEmptyState()
-                : StreamBuilder<int?>(
-                    stream: _musicService.audioPlayer.currentIndexStream,
-                    builder: (context, indexSnapshot) {
-                      final currentIndex = indexSnapshot.data;
-                      return StreamBuilder<PlayerState>(
-                        stream: _musicService.audioPlayer.playerStateStream,
-                        builder: (context, snapshot) {
-                          // 1. Get the current playing status (true/false)
-                          final playing = snapshot.data?.playing ?? false;
-
-                          return ListView.builder(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
-                            itemCount: _songs.length,
-                            itemBuilder: (context, index) {
-                              // 2. Check if this specific tile is the one loaded in the player
-                              final bool isCurrentTrack = currentIndex == index;
-
-                              return SongTile(
-                                song: _songs[index],
-                                isPlaying: isCurrentTrack,
-                                // 3. Only shows the "Bars" if it's the active track AND it's not paused
-                                isActuallyPlaying: isCurrentTrack && playing,
-                                onTap: () => _onSongTap(index),
-                              );
-                            },
-                          );
-                        },
-                      );
-                    },
-                  ),
-          ), // Expanded
-          StreamBuilder<int?>(
-            stream: _musicService.audioPlayer.currentIndexStream,
-            builder: (context, snapshot) {
-              if (snapshot.data == null) return const SizedBox.shrink();
-              return MiniPlayer(
-                onTap: () => _openMusicScreen(context),
-                onPlayPause: () async {
-                  // await _musicService.pauseSong();
-                  setState(() {});
+                    onPressed: () => _musicService.toggleShuffle(),
+                  );
                 },
-              ); // MiniPlayer
-            },
+              ),
+            ],
           ),
+
+          // --- APPLE STYLE SEARCH BAR ---
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (val) => setState(() => _searchQuery = val),
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+                cursorColor: const Color(0xFFFC3C44),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xFF1C1C1E),
+                  hintText: 'Songs, Artists, or Albums',
+                  hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Colors.grey,
+                    size: 22,
+                  ),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(
+                            Icons.cancel,
+                            color: Colors.grey,
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = "");
+                          },
+                        )
+                      : null,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // --- CONTENT STATE ---
+          if (_isLoading)
+            const SliverFillRemaining(
+              child: Center(
+                child: CircularProgressIndicator(color: Color(0xFFFC3C44)),
+              ),
+            )
+          else if (_filteredSongs.isEmpty)
+            SliverFillRemaining(child: _buildEmptyState())
+          else
+            _buildSliverSongList(),
         ],
-      ), // Column
-    ); // Scaffold
+      ),
+    );
+  }
+
+  Widget _buildSliverSongList() {
+    return StreamBuilder<int?>(
+      stream: _musicService.audioPlayer.currentIndexStream,
+      builder: (context, indexSnapshot) {
+        final currentIndex = indexSnapshot.data;
+        return StreamBuilder<PlayerState>(
+          stream: _musicService.audioPlayer.playerStateStream,
+          builder: (context, snapshot) {
+            final playing = snapshot.data?.playing ?? false;
+            final songsToDisplay = _filteredSongs;
+
+            return SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final song = songsToDisplay[index];
+                  final globalIndex = _songs.indexOf(song);
+                  final bool isCurrentTrack = globalIndex == currentIndex;
+
+                  return SongTile(
+                    song: song,
+                    isPlaying: isCurrentTrack,
+                    isActuallyPlaying: isCurrentTrack && playing,
+                    onTap: () => _musicService.playSongs(globalIndex),
+                  );
+                }, childCount: songsToDisplay.length),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Widget _buildEmptyState() {
@@ -145,27 +218,18 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.music_off,
-            size: 80,
-            color: Color(0xFF9CA3AF),
-          ), // textMuted
-          const SizedBox(height: 16),
+          const Icon(Icons.music_off, size: 60, color: Colors.grey),
+          const SizedBox(height: 12),
           const Text(
             'No songs found',
-            style: TextStyle(color: Color(0xFFFFFFFF), fontSize: 20),
+            style: TextStyle(color: Colors.white, fontSize: 18),
           ),
-          const SizedBox(height: 16),
-          ElevatedButton(
+          TextButton(
             onPressed: _loadSongs,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFC3C44), // colors.primary
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+            child: const Text(
+              'Refresh Library',
+              style: TextStyle(color: Color(0xFFFC3C44)),
             ),
-            child: const Text('Scan Again'),
           ),
         ],
       ),

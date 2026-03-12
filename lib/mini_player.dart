@@ -102,54 +102,72 @@ class _MiniPlayerState extends State<MiniPlayer> {
                     ),
                   ),
                 ),
-                // --- CONTROLS ---
+                // --- CONTROLS SECTION (Updated) ---
                 StreamBuilder<PlayerState>(
                   stream: _musicService.audioPlayer.playerStateStream,
                   builder: (context, snapshot) {
-                    final playing = snapshot.data?.playing ?? false;
+                    final playerState = snapshot.data;
+                    final processingState = playerState?.processingState;
+                    final playing = playerState?.playing ?? false;
+
+                    // 1. Show a loading spinner if the song is buffering
+                    if (processingState == ProcessingState.loading ||
+                        processingState == ProcessingState.buffering) {
+                      return Container(
+                        margin: const EdgeInsets.all(8.0),
+                        width: 24.0,
+                        height: 24.0,
+                        child: const CircularProgressIndicator(
+                          color: Color(0xFFFC3C44),
+                          strokeWidth: 2,
+                        ),
+                      );
+                    }
 
                     return Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Play/Pause Button
+                        // --- PLAY/PAUSE BUTTON ---
                         IconButton(
                           onPressed: () {
-                            playing
-                                ? _musicService.audioPlayer.pause()
-                                : _musicService.audioPlayer.play();
-                            widget.onPlayPause();
+                            if (playing) {
+                              _musicService.audioPlayer.pause();
+                            } else {
+                              // If the song ended, seek back to start and play
+                              if (processingState ==
+                                  ProcessingState.completed) {
+                                _musicService.audioPlayer.seek(Duration.zero);
+                              }
+                              _musicService.audioPlayer.play();
+                            }
                           },
                           icon: Icon(
                             playing
                                 ? Icons.pause_rounded
                                 : Icons.play_arrow_rounded,
                             color: Colors.white,
-                            size: 28,
+                            size: 32,
                           ),
                         ),
 
-                        // Skip Next Button with Automatic Dimming
+                        // --- SKIP NEXT BUTTON ---
                         StreamBuilder<SequenceState?>(
                           stream: _musicService.audioPlayer.sequenceStateStream,
-                          builder: (context, snapshot) {
-                            final sequenceState = snapshot.data;
-
-                            // Check manually: Is the current index NOT the last one in the list?
+                          builder: (context, seqSnapshot) {
+                            final sequenceState = seqSnapshot.data;
+                            // Check if there's a next track in the queue
                             final hasNext =
                                 (sequenceState?.currentIndex ?? 0) <
                                 ((sequenceState?.sequence.length ?? 0) - 1);
 
                             return IconButton(
                               onPressed: hasNext
-                                  ? () async {
-                                      await _musicService.skipNext();
-                                      widget.onPlayPause();
-                                    }
+                                  ? () => _musicService.audioPlayer.seekToNext()
                                   : null,
                               icon: Icon(
                                 Icons.skip_next_rounded,
-                                color: hasNext ? Colors.white : Colors.white38,
-                                size: 26,
+                                color: hasNext ? Colors.white : Colors.white24,
+                                size: 30,
                               ),
                             );
                           },

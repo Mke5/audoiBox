@@ -63,19 +63,6 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.black,
       // Prevents the keyboard from pushing the MiniPlayer up
       resizeToAvoidBottomInset: false,
-
-      // Keeps MiniPlayer pinned at the bottom regardless of keyboard
-      bottomNavigationBar: StreamBuilder<int?>(
-        stream: _musicService.audioPlayer.currentIndexStream,
-        builder: (context, snapshot) {
-          if (snapshot.data == null) return const SizedBox.shrink();
-          return MiniPlayer(
-            onTap: () => _openMusicScreen(context),
-            onPlayPause: () => _musicService.pauseSong(),
-          );
-        },
-      ),
-
       body: CustomScrollView(
         slivers: [
           // --- LARGE TITLE APP BAR ---
@@ -191,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
             final songsToDisplay = _filteredSongs;
 
             return SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 150),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final song = songsToDisplay[index];

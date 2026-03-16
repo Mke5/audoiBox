@@ -1,6 +1,5 @@
-import 'package:audiobox/home_screen.dart';
+import 'package:audiobox/main_navigation.dart';
 import 'package:audiobox/music_service.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -45,7 +44,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: HomeScreen(),
+      home: MainNavigation(),
     );
   }
 }

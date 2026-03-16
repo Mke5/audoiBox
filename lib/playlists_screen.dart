@@ -142,7 +142,8 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
                     MaterialPageRoute(
                       builder: (context) => PlaylistDetailScreen(
                         playlistName: playlist.playlist,
-                        // playlistId: playlist.id, // Passing ID is better for MediaStore
+                        playlistId:
+                            playlist.id, // Passing ID is better for MediaStore
                       ),
                     ),
                   ).then((_) => _refresh());

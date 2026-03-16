@@ -1,5 +1,6 @@
 import 'package:audio_session/audio_session.dart';
 import 'package:audiobox/song_model.dart';
+import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -71,6 +72,35 @@ class MusicService {
       uriType: UriType.EXTERNAL,
       // This filters the global song list by the artist name
     );
+  }
+
+  Future<void> playPlaylist(
+    List<SongModel> songs, {
+    int initialIndex = 0,
+  }) async {
+    try {
+      // 1. Create the playlist for the player
+      final playlist = ConcatenatingAudioSource(
+        children: songs.map((song) {
+          return AudioSource.uri(
+            Uri.parse(song.data),
+            tag: MediaItem(
+              id: song.id.toString(),
+              album: song.album ?? "Unknown Album",
+              title: song.title,
+              artist: song.artist ?? "Unknown Artist",
+              // You can add artwork URI here if needed
+            ),
+          );
+        }).toList(),
+      );
+
+      // 2. Load and play
+      await audioPlayer.setAudioSource(playlist, initialIndex: initialIndex);
+      await audioPlayer.play();
+    } catch (e) {
+      debugPrint("Error playing playlist: $e");
+    }
   }
 
   // Check if song is liked

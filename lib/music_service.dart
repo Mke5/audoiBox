@@ -36,6 +36,26 @@ class MusicService {
 
   List<Song> get songs => _songs;
 
+  // To get all playlists
+  Future<List<PlaylistModel>> getPlaylists() async {
+    return await _audioQuery.queryPlaylists();
+  }
+
+  Future<void> createPlaylist(String name) async {
+    await _audioQuery.createPlaylist(name);
+  }
+
+  // Add a specific song to an existing system playlist
+  Future<void> addSongToPlaylist(int playlistId, int songId) async {
+    await _audioQuery.addToPlaylist(playlistId, songId);
+    // await _audioQuery.removeFromPlaylist(playlistId, songId);
+  }
+
+  // Delete a playlist
+  Future<void> removePlaylist(int playlistId) async {
+    await _audioQuery.removePlaylist(playlistId);
+  }
+
   // Check if song is liked
   bool isFavorite(int songId) {
     final box = Hive.box<int>(_favoritesBoxName);

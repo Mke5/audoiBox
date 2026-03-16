@@ -3,6 +3,8 @@ import 'package:audiobox/song_model.dart';
 import 'package:audiobox/song_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -37,6 +39,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             slivers: [
               _buildAppBar(),
               _buildSearchBar(),
+              if (allFavorites.isNotEmpty) _buildActionButtons(filteredSongs),
               if (allFavorites.isEmpty)
                 SliverFillRemaining(child: _buildEmptyState())
               else
@@ -117,17 +120,74 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate((context, index) {
           final song = songs[index];
-          return SongTile(
-            song: song,
-            isPlaying:
-                false, // You can later check if this matches current playing song
-            isActuallyPlaying: false,
-            onTap: () {
-              // Now works because MusicService accepts customList!
-              MusicService().playSongs(index, customList: songs);
+
+          // --- ADD THIS STREAM BUILDER ---
+          return StreamBuilder<SequenceState?>(
+            stream: MusicService().audioPlayer.sequenceStateStream,
+            builder: (context, snapshot) {
+              final state = snapshot.data;
+              if (state == null) return const SizedBox();
+
+              // Check if the current playing media matches this favorite song's ID
+              final currentItem = state.currentSource?.tag as MediaItem?;
+              final bool isCurrentSong = currentItem?.id == song.id.toString();
+
+              return SongTile(
+                song: song,
+                isPlaying: isCurrentSong, // Highlights the title in red
+                isActuallyPlaying:
+                    isCurrentSong && MusicService().audioPlayer.playing,
+                onTap: () => MusicService().playSongs(index, customList: songs),
+              );
             },
           );
         }, childCount: songs.length),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(List<Song> songs) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            // PLAY ALL BUTTON
+            Expanded(
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1C1C1E),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () => MusicService().playSongs(0, customList: songs),
+                icon: const Icon(Icons.play_arrow),
+                label: const Text("Play"),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // SHUFFLE BUTTON
+            Expanded(
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1C1C1E),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () {
+                  var shuffled = List<Song>.from(songs)..shuffle();
+                  MusicService().playSongs(0, customList: shuffled);
+                },
+                icon: const Icon(Icons.shuffle),
+                label: const Text("Shuffle"),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:audiobox/music_service.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:on_audio_query_pluse/on_audio_query.dart';
 import 'package:marquee/marquee.dart';
 
@@ -23,15 +24,13 @@ class _MiniPlayerState extends State<MiniPlayer> {
       builder: (context, snapshot) {
         final sequenceState = snapshot.data;
 
-        final index = sequenceState?.currentIndex;
-
         // If index is null (player hasn't started/no songs), hide the player
-        if (index == null || _musicService.songs.isEmpty) {
+        if (sequenceState == null || sequenceState.currentSource == null) {
           return const SizedBox.shrink();
         }
 
         // Get the current song based on the index emitted by the stream
-        final currentSong = _musicService.songs[index];
+        final currentSong = sequenceState.currentSource!.tag as MediaItem;
 
         return GestureDetector(
           onTap: widget.onTap,
@@ -56,7 +55,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: QueryArtworkWidget(
-                    id: currentSong.id,
+                    id: int.parse(currentSong.id),
                     type: ArtworkType.AUDIO,
                     artworkWidth: 40,
                     artworkHeight: 40,
@@ -153,12 +152,15 @@ class _MiniPlayerState extends State<MiniPlayer> {
                         ),
                         IconButton(
                           onPressed:
-                              (index < (sequenceState!.sequence.length - 1))
+                              (sequenceState.currentIndex ?? 0) <
+                                  (sequenceState.sequence.length - 1)
                               ? () => _musicService.audioPlayer.seekToNext()
                               : null,
                           icon: Icon(
                             Icons.skip_next_rounded,
-                            color: (index < (sequenceState.sequence.length - 1))
+                            color:
+                                (sequenceState.currentIndex ?? 0) <
+                                    (sequenceState.sequence.length - 1)
                                 ? Colors.white
                                 : Colors.white24,
                             size: 30,

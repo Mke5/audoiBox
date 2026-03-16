@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:audiobox/music_service.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:on_audio_query_pluse/on_audio_query.dart';
 import 'package:marquee/marquee.dart';
 
@@ -25,7 +26,7 @@ class _MusicScreenState extends State<MusicScreen> {
       stream: _musicService.audioPlayer.sequenceStateStream,
       builder: (context, snapshot) {
         final state = snapshot.data;
-        if (state?.currentSource == null) {
+        if (state?.currentSource == null || _musicService.songs.isEmpty) {
           return const Scaffold(
             backgroundColor: Colors.black,
             body: Center(
@@ -35,8 +36,12 @@ class _MusicScreenState extends State<MusicScreen> {
         }
 
         // Logic to get the current song data from the playlist index
-        final currentIndex = state!.currentIndex;
-        final currentSong = _musicService.songs[currentIndex ?? 0];
+        final currentIndex = state!.currentSource!.tag as MediaItem;
+        print("currentIndex.id: ${currentIndex.id}");
+        print("Songs: ${_musicService.songs.map((song) => song.id).toList()}");
+        final currentSong = _musicService.songs.firstWhere(
+          (song) => song.id == int.parse(currentIndex.id),
+        );
 
         return Scaffold(
           backgroundColor: Colors.black,

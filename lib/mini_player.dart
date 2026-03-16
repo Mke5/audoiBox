@@ -18,10 +18,12 @@ class _MiniPlayerState extends State<MiniPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<int?>(
-      stream: _musicService.audioPlayer.currentIndexStream,
+    return StreamBuilder<SequenceState?>(
+      stream: _musicService.audioPlayer.sequenceStateStream,
       builder: (context, snapshot) {
-        final index = snapshot.data;
+        final sequenceState = snapshot.data;
+
+        final index = sequenceState?.currentIndex;
 
         // If index is null (player hasn't started/no songs), hide the player
         if (index == null || _musicService.songs.isEmpty) {
@@ -131,7 +133,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
                         IconButton(
                           onPressed: () {
                             if (playing) {
-                              _musicService.audioPlayer.pause();
+                              _musicService.pauseSong();
                             } else {
                               // If the song ended, seek back to start and play
                               if (processingState ==
@@ -149,28 +151,18 @@ class _MiniPlayerState extends State<MiniPlayer> {
                             size: 32,
                           ),
                         ),
-
-                        // --- SKIP NEXT BUTTON ---
-                        StreamBuilder<SequenceState?>(
-                          stream: _musicService.audioPlayer.sequenceStateStream,
-                          builder: (context, seqSnapshot) {
-                            final sequenceState = seqSnapshot.data;
-                            // Check if there's a next track in the queue
-                            final hasNext =
-                                (sequenceState?.currentIndex ?? 0) <
-                                ((sequenceState?.sequence.length ?? 0) - 1);
-
-                            return IconButton(
-                              onPressed: hasNext
-                                  ? () => _musicService.audioPlayer.seekToNext()
-                                  : null,
-                              icon: Icon(
-                                Icons.skip_next_rounded,
-                                color: hasNext ? Colors.white : Colors.white24,
-                                size: 30,
-                              ),
-                            );
-                          },
+                        IconButton(
+                          onPressed:
+                              (index < (sequenceState!.sequence.length - 1))
+                              ? () => _musicService.audioPlayer.seekToNext()
+                              : null,
+                          icon: Icon(
+                            Icons.skip_next_rounded,
+                            color: (index < (sequenceState.sequence.length - 1))
+                                ? Colors.white
+                                : Colors.white24,
+                            size: 30,
+                          ),
                         ),
                       ],
                     );

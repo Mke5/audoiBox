@@ -79,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               centerTitle: false,
               title: const Text(
-                'Audiobox',
+                'Songs',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20,

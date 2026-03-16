@@ -48,8 +48,8 @@ class _MainNavigationState extends State<MainNavigation> {
           children: [
             IndexedStack(index: _selectedIndex, children: _pages),
             Positioned(
-              left: 8,
-              right: 8,
+              left: 4,
+              right: 4,
               bottom: 70, // Sits exactly above the tab bar
               child: StreamBuilder<int?>(
                 stream: _musicService.audioPlayer.currentIndexStream,

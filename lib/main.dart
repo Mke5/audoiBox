@@ -5,7 +5,9 @@ import 'package:permission_handler/permission_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await MusicService().initAudioSession();
+  final musicService = MusicService();
+  await musicService.initDatabase();
+  await musicService.initAudioSession();
   await _requestPermissions();
   runApp(const MyApp());
 }

@@ -56,6 +56,23 @@ class MusicService {
     await _audioQuery.removePlaylist(playlistId);
   }
 
+  Future<List<ArtistModel>> queryArtists() async {
+    return await _audioQuery.queryArtists(
+      sortType: ArtistSortType.ARTIST,
+      orderType: OrderType.ASC_OR_SMALLER,
+      uriType: UriType.EXTERNAL,
+    );
+  }
+
+  Future<List<SongModel>> querySongsByArtist(String artistName) async {
+    return await _audioQuery.querySongs(
+      sortType: SongSortType.TITLE,
+      orderType: OrderType.ASC_OR_SMALLER,
+      uriType: UriType.EXTERNAL,
+      // This filters the global song list by the artist name
+    );
+  }
+
   // Check if song is liked
   bool isFavorite(int songId) {
     final box = Hive.box<int>(_favoritesBoxName);

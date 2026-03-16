@@ -4,6 +4,7 @@ import 'package:audiobox/music_service.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:on_audio_query_pluse/on_audio_query.dart';
 import 'package:marquee/marquee.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 
 class MusicScreen extends StatefulWidget {
   const MusicScreen({super.key});
@@ -55,7 +56,7 @@ class _MusicScreenState extends State<MusicScreen> {
                     children: [
                       const SizedBox(height: 8),
                       _buildDismissHandle(),
-                      _buildTopBar(context),
+                      _buildTopBar(context, currentSong),
                       const Spacer(),
                       _buildAlbumArt(currentSong.id),
                       const Spacer(),
@@ -91,12 +92,13 @@ class _MusicScreenState extends State<MusicScreen> {
     );
   }
 
-  Widget _buildTopBar(BuildContext context) {
+  Widget _buildTopBar(BuildContext context, currentSong) {
+    // Add currentSong parameter
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 35),
+          icon: const Icon(Icons.expand_more, color: Colors.white, size: 35),
           onPressed: () => Navigator.pop(context),
         ),
         const Text(
@@ -108,9 +110,44 @@ class _MusicScreenState extends State<MusicScreen> {
             letterSpacing: 1.5,
           ),
         ),
-        IconButton(
+        PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert, color: Colors.white),
-          onPressed: () {},
+          color: const Color(0xFF1C1C1E), // Dark background for the menu
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          onSelected: (value) {
+            if (value == 'playlist') {
+              _showPlaylistSelector(context, currentSong);
+            } else if (value == 'share') {
+              // _musicService.shareSong(currentSong.data, currentSong.title);
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'playlist',
+              child: Row(
+                children: [
+                  Icon(Icons.playlist_add, color: Colors.white, size: 20),
+                  SizedBox(width: 12),
+                  Text(
+                    "Add to Playlist",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'share',
+              child: Row(
+                children: [
+                  Icon(Icons.share, color: Colors.white, size: 20),
+                  SizedBox(width: 12),
+                  Text("Share Song", style: TextStyle(color: Colors.white)),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -184,13 +221,23 @@ class _MusicScreenState extends State<MusicScreen> {
             ],
           ),
         ),
-        IconButton(
-          onPressed: () => setState(() => isFavorite = !isFavorite),
-          icon: Icon(
-            isFavorite ? Icons.favorite : Icons.favorite_border,
-            color: isFavorite ? const Color(0xFFFC3C44) : Colors.white54,
-            size: 28,
-          ),
+
+        // --- NEW FAVORITE AWARENESS LOGIC ---
+        ValueListenableBuilder<Box<int>>(
+          valueListenable: Hive.box<int>('favorites').listenable(),
+          builder: (context, box, _) {
+            // Check if the current song's ID exists in the 'favorites' box
+            final isLiked = box.containsKey(currentSong.id);
+
+            return IconButton(
+              onPressed: () => _musicService.toggleFavorite(currentSong.id),
+              icon: Icon(
+                isLiked ? Icons.favorite : Icons.favorite_border,
+                color: isLiked ? const Color(0xFFFC3C44) : Colors.white54,
+                size: 28,
+              ),
+            );
+          },
         ),
       ],
     );
@@ -333,6 +380,99 @@ class _MusicScreenState extends State<MusicScreen> {
                     ),
             ),
           ),
+        );
+      },
+    );
+  }
+
+  void _showPlaylistSelector(BuildContext context, dynamic currentSong) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1C1C1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return FutureBuilder<List<PlaylistModel>>(
+          // Fetch playlists from on_audio_query
+          future: OnAudioQuery().queryPlaylists(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const SizedBox(
+                height: 200,
+                child: Center(
+                  child: CircularProgressIndicator(color: Color(0xFFFC3C44)),
+                ),
+              );
+            }
+
+            final playlists = snapshot.data!;
+
+            if (playlists.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(24),
+                child: const Text(
+                  "No playlists found. Create one in the Library.",
+                  style: TextStyle(color: Colors.white70),
+                ),
+              );
+            }
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    "Add to Playlist",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const Divider(color: Colors.white10),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: playlists.length,
+                    itemBuilder: (context, index) {
+                      final playlist = playlists[index];
+                      return ListTile(
+                        leading: const Icon(
+                          Icons.playlist_play,
+                          color: Color(0xFFFC3C44),
+                        ),
+                        title: Text(
+                          playlist.playlist,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        subtitle: Text(
+                          "${playlist.numOfSongs} songs",
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                        onTap: () async {
+                          // Logic to add song to the specific playlist
+                          await OnAudioQuery().addToPlaylist(
+                            playlist.id,
+                            currentSong.id,
+                          );
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Added to ${playlist.playlist}"),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            );
+          },
         );
       },
     );

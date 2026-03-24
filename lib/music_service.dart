@@ -229,15 +229,17 @@ class MusicService {
   Future<void> playSongs(int index, {List<Song>? customList}) async {
     try {
       List<Song> targetList = customList ?? _songs;
-      _playlist = ConcatenatingAudioSource(
+      final newPlaylist = ConcatenatingAudioSource(
         children: targetList.map((song) => _createAudioSource(song)).toList(),
       );
-      await _audioPlayer.setAudioSource(_playlist);
-      // If shuffle is on, we seek to the index in the shuffled list
-      await _audioPlayer.seek(Duration.zero, index: index);
+      await _audioPlayer.setAudioSource(
+        newPlaylist,
+        initialIndex: index,
+        initialPosition: Duration.zero,
+      );
       await _audioPlayer.play();
     } catch (e) {
-      print("Error playing song: $e");
+      debugPrint("Error playing song: $e");
     }
   }
 
@@ -247,11 +249,45 @@ class MusicService {
       ? await _audioPlayer.pause()
       : await _audioPlayer.play();
 
-  Future<void> skipNext() async => _audioPlayer.hasNext
-      ? await _audioPlayer.seekToNext()
-      : await _audioPlayer.seek(Duration.zero, index: 0);
+  Future<void> skipNext() async {
+    final isRepeatOne = _audioPlayer.loopMode == LoopMode.one;
+    if (isRepeatOne) {
+      await _audioPlayer.setLoopMode(LoopMode.off);
 
-  Future<void> skipPrevious() async => await _audioPlayer.seekToPrevious();
+      if (_audioPlayer.hasNext) {
+        await _audioPlayer.seekToNext();
+      } else {
+        await _audioPlayer.seek(Duration.zero, index: 0);
+      }
+      await _audioPlayer.setLoopMode(LoopMode.one);
+    } else {
+      if (_audioPlayer.hasNext) {
+        await _audioPlayer.seekToNext();
+      } else {
+        await _audioPlayer.seek(Duration.zero, index: 0);
+      }
+    }
+  }
+
+  Future<void> skipPrevious() async {
+    final isRepeatOne = _audioPlayer.loopMode == LoopMode.one;
+
+    try {
+      if (isRepeatOne) {
+        await _audioPlayer.setLoopMode(LoopMode.off);
+        await _audioPlayer.seekToPrevious();
+        await _audioPlayer.setLoopMode(LoopMode.one);
+      } else {
+        if ((_audioPlayer.position.inSeconds) > 3) {
+          await _audioPlayer.seek(Duration.zero);
+        } else {
+          await _audioPlayer.seekToPrevious();
+        }
+      }
+    } catch (e) {
+      debugPrint("Error skipping to previous: $e");
+    }
+  }
 
   Future<void> seekTo(Duration position) async =>
       await _audioPlayer.seek(position);

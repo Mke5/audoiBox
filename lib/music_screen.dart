@@ -38,8 +38,10 @@ class _MusicScreenState extends State<MusicScreen> {
 
         // Logic to get the current song data from the playlist index
         final currentIndex = state!.currentSource!.tag as MediaItem;
-        print("currentIndex.id: ${currentIndex.id}");
-        print("Songs: ${_musicService.songs.map((song) => song.id).toList()}");
+        debugPrint("currentIndex.id: ${currentIndex.id}");
+        debugPrint(
+          "Songs: ${_musicService.songs.map((song) => song.id).toList()}",
+        );
         final currentSong = _musicService.songs.firstWhere(
           (song) => song.id == int.parse(currentIndex.id),
         );
@@ -98,7 +100,7 @@ class _MusicScreenState extends State<MusicScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
-          icon: const Icon(Icons.expand_more, color: Colors.white, size: 35),
+          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 35),
           onPressed: () => Navigator.pop(context),
         ),
         const Text(

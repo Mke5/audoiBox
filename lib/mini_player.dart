@@ -151,18 +151,10 @@ class _MiniPlayerState extends State<MiniPlayer> {
                           ),
                         ),
                         IconButton(
-                          onPressed:
-                              (sequenceState.currentIndex ?? 0) <
-                                  (sequenceState.sequence.length - 1)
-                              ? () => _musicService.audioPlayer.seekToNext()
-                              : null,
+                          onPressed: () => _musicService.skipNext(),
                           icon: Icon(
                             Icons.skip_next_rounded,
-                            color:
-                                (sequenceState.currentIndex ?? 0) <
-                                    (sequenceState.sequence.length - 1)
-                                ? Colors.white
-                                : Colors.white24,
+                            color: Colors.white,
                             size: 30,
                           ),
                         ),

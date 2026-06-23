@@ -122,7 +122,7 @@ class _MusicScreenState extends State<MusicScreen> {
             if (value == 'playlist') {
               _showPlaylistSelector(context, currentSong);
             } else if (value == 'share') {
-              // _musicService.shareSong(currentSong.data, currentSong.title);
+              _musicService.shareSong(currentSong.path, currentSong.title);
             }
           },
           itemBuilder: (context) => [

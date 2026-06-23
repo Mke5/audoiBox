@@ -68,7 +68,7 @@ class SongTile extends StatelessWidget {
                   if (value == 'favorite') {
                     await MusicService().toggleFavorite(song.id);
                   } else if (value == 'share') {
-                    // Share logic
+                    await MusicService().shareSong(song.path, song.title);
                   } else if (value == 'delete') {
                     final confirmed = await showDialog<bool>(
                       context: context,

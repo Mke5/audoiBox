@@ -5,6 +5,7 @@ import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:on_audio_query_pluse/on_audio_query.dart';
+import 'package:share_plus/share_plus.dart';
 
 class MusicService {
   static final MusicService _instance = MusicService._internal();
@@ -174,6 +175,17 @@ class MusicService {
       }
     } catch (e) {
       debugPrint("Error deleting song: $e");
+    }
+  }
+
+  Future<void> shareSong(String filePath, String title) async {
+    try {
+      await Share.shareXFiles(
+        [XFile(filePath)],
+        text: title,
+      );
+    } catch (e) {
+      debugPrint("Error sharing song: $e");
     }
   }
 

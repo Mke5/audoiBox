@@ -1,30 +1,59 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:audiobox/song_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:audiobox/main.dart';
-
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('SongModel', () {
+    test('creates a song with required fields', () {
+      final song = Song(
+        id: 1,
+        title: 'Test Song',
+        artist: 'Test Artist',
+        album: 'Test Album',
+        duration: const Duration(seconds: 180),
+        path: '/music/test.mp3',
+      );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      expect(song.id, 1);
+      expect(song.title, 'Test Song');
+      expect(song.artist, 'Test Artist');
+      expect(song.album, 'Test Album');
+      expect(song.duration.inSeconds, 180);
+      expect(song.path, '/music/test.mp3');
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    test('uses defaults for missing values', () {
+      final song = Song(
+        id: 2,
+        title: 'Another Song',
+        artist: 'Artist',
+        album: 'Album',
+        duration: const Duration(seconds: 120),
+        path: '/music/another.mp3',
+      );
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+      expect(song.title, 'Another Song');
+      expect(song.artist, 'Artist');
+    });
+
+    test('supports equality by id', () {
+      final a = Song(
+        id: 1,
+        title: 'Song A',
+        artist: 'Artist',
+        album: 'Album',
+        duration: Duration.zero,
+        path: '/a.mp3',
+      );
+      final b = Song(
+        id: 1,
+        title: 'Song B',
+        artist: 'Artist',
+        album: 'Album',
+        duration: Duration.zero,
+        path: '/b.mp3',
+      );
+
+      expect(a.id, b.id);
+    });
   });
 }

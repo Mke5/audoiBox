@@ -42,10 +42,7 @@ class ArtistDetailScreen extends StatelessWidget {
             );
           }
 
-          // Filter songs locally to ensure they belong to this artist
-          final artistSongs =
-              snapshot.data?.where((s) => s.artist == artistName).toList() ??
-              [];
+          final artistSongs = snapshot.data ?? [];
 
           if (artistSongs.isEmpty) {
             return const Center(

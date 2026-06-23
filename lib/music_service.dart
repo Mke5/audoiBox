@@ -67,12 +67,12 @@ class MusicService {
   }
 
   Future<List<SongModel>> querySongsByArtist(String artistName) async {
-    return await _audioQuery.querySongs(
+    final allSongs = await _audioQuery.querySongs(
       sortType: SongSortType.TITLE,
       orderType: OrderType.ASC_OR_SMALLER,
       uriType: UriType.EXTERNAL,
-      // This filters the global song list by the artist name
     );
+    return allSongs.where((s) => s.artist == artistName).toList();
   }
 
   Future<void> playPlaylist(

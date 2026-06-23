@@ -69,6 +69,46 @@ class SongTile extends StatelessWidget {
                     await MusicService().toggleFavorite(song.id);
                   } else if (value == 'share') {
                     // Share logic
+                  } else if (value == 'delete') {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        backgroundColor: const Color(0xFF1C1C1E),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        title: const Text(
+                          "Delete Song",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        content: Text(
+                          "Remove '${song.title}' from your device?",
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text(
+                              "Cancel",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text(
+                              "Delete",
+                              style: TextStyle(
+                                color: Color(0xFFFC3C44),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed == true) {
+                      await MusicService().deleteSong(song.id, song.path);
+                    }
                   }
                 },
                 itemBuilder: (BuildContext context) => [

@@ -162,6 +162,21 @@ class MusicService {
 
   AudioPlayer get audioPlayer => _audioPlayer;
 
+  Future<void> deleteSong(int songId, String filePath) async {
+    try {
+      await _audioQuery.deleteAudios([songId]);
+      _songs.removeWhere((s) => s.id == songId);
+
+      // Remove from favorites if present
+      final box = Hive.box<int>(_favoritesBoxName);
+      if (box.containsKey(songId)) {
+        await box.delete(songId);
+      }
+    } catch (e) {
+      debugPrint("Error deleting song: $e");
+    }
+  }
+
   // --- Helper to create AudioSource with Metadata ---
   // This is CRITICAL for your MusicScreen to show the title/artist
   AudioSource _createAudioSource(Song song) {

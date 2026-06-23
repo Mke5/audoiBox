@@ -86,9 +86,10 @@ class ArtistDetailScreen extends StatelessWidget {
                   song.album ?? "Unknown Album",
                   style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
-                onTap: () {
-                  // Logic to play song goes here
-                },
+                onTap: () => _musicService.playPlaylist(
+                  artistSongs,
+                  initialIndex: index,
+                ),
               );
             },
           );
